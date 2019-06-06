@@ -32,15 +32,19 @@ is_old_cycle <- function(df){
 #' function identifying the RCID to be assigned in the legacy data frame
 #' @return the input legacy data frame after updates to the RCID column, and the updated table for the rcid too
 #' @export
-build_rcid <- function(df_leg, df_rcid){
+build_rcid <- function(df_leg, df_Axel){
 
   #first we deal with the simple case of Chad old
 
   #map the country code -- this adds the extra column with the country codes and the cycle number in the rcid table
-  df_rcid <- map_country_codes(df_rcid)
+  df_Axel <- map_country_codes(df_Axel)
 
   #now need to map the cycle number with year -- intervals?
-  df_rcid <- map_cycle_year(df_rcid)
+  df_Axel <- map_cycle_year(df_Axel)
+
+
+  #tests on apply for possible cycle
+
 
 
 
@@ -65,15 +69,32 @@ build_rcid <- function(df_leg, df_rcid){
 
 
 
-  country_rcid <- as.character(df_rcid$Country)
-  country_leg <- as.character(df_leg$Country)
-  bool_cond <- grepl(country_rcid, country_leg) & (df_leg$Year < 2018) & grepl(df_rcid$Year, df_leg$Year)
+#  country_rcid <- as.character(df_Axel$Country)
+#  country_leg <- as.character(df_leg$Country)
+#  bool_cond <- grepl(country_rcid, country_leg) & (df_leg$Year < 2018) & grepl(df_Axel$Year, df_leg$Year)
 
-  df_leg$RC.ID <- ifelse(bool_cond, as.character(df_rcid$Research.Cycle.ID[which(bool_cond)]), "")
-
-
+#  df_leg$RC.ID <- ifelse(bool_cond, df_Axel$Research.Cycle.ID, "")
 
 
-  df_list <- list(df_leg, df_rcid)
+  #first step towards a left join is to rename all columns that are in common -- https://stackoverflow.com/questions/7531868/how-to-rename-a-single-column-in-a-data-frame
+#  names(df_Axel)[names(df_Axel) == 'Research.Cycle.ID'] <- 'RC.ID'
+#  names(df_Axel)[names(df_Axel) == 'Research.Cycle.Title'] <- 'RC.Title'
+  names(df_Axel)[names(df_Axel) == 'Type.of.crisis'] <- 'Type.of.emergency'
+  names(df_Axel)[names(df_Axel) == 'Mandating.Body.agency'] <- 'Mandating.body.agency'
+  df_Axel <- transform(df_Axel, Initiative = as.character(Initiative))
+  df_leg <- transform(df_leg, Initiative = as.character(Initiative))
+
+  #rename country column in leg dataset and then split it in counry and country 1
+  names(df_leg)[names(df_leg) == 'Country'] <- 'all_countries'
+  new_col_names <- c("Country", "country_1")
+  new_cols <- reshape2::colsplit(df_leg$all_countries, ",", new_col_names)
+  new_df_leg <- cbind(df_leg, new_cols)
+
+  #now test a left join to understand what it does.
+  new_joined_df <- left_join(new_df_leg, df_Axel, by = c("Year", "Donor", "Country"))#, "Initiative", "Ongoing.Past", "Type.of.emergency", "Mandating.body.agency"))
+
+  df_list <- list(new_df_leg, df_Axel, new_joined_df)
   return(df_list)
 }
+
+

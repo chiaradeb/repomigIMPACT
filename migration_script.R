@@ -14,6 +14,13 @@ df_rcid
 df_rcid["Ongoing.Past"] <- NA
 df_rcid
 
+#assign row names
+row.names(df_rcid) <- as.character(df_rcid$Research.Cycle.ID)
+df_rcid
+
+test_list <- which(as.character(df_rcid$Country) == "Chad")
+test_list
+
 #create a new column that records just the beginning of the date info -- the year -- inspired by: https://stackoverflow.com/questions/4350440/split-data-frame-string-column-into-multiple-columns
 new_df_rc <- extract_year(df_rc)
 new_df_rc
@@ -24,7 +31,32 @@ new_df_rc
 
 #now fill in the RCID column
 list_of_dfs <- build_rcid(new_df_rc, df_rcid)
-new_df_rc <- list_of_dfs[1]
-df_rcid <- list_of_dfs[2]
+new_df_rc <- as.data.frame(list_of_dfs[1])
+df_rcid <- as.data.frame(list_of_dfs[2])
+new_joined_df <- list_of_dfs[3]
 new_df_rc
 df_rcid
+new_joined_df
+write.csv2(new_joined_df, "output.csv")
+
+df_rcid$Country
+#countries <- as.character(df_rcid$Country)
+#countries
+#df_rcid$Research.Cycle.ID
+#df_rcid$poss_rcids <- ifelse(countries == "Chad", as.character(df_rcid$Research.Cycle.ID), "")
+#df_rcid$poss_rcids
+
+#sapply credo permetta di usare y
+
+test_appl_funct <- function(x, y){
+
+  #x e il vettore riga della df legacy, y e la df rcid
+  countries <- as.character(y$Country)
+  y$poss_rcids <- ifelse(grepl(countries, as.character(x[3])), as.character(y$Research.Cycle.ID), "")
+  print(y$poss_rcids)
+  x[5] <- y$poss_rcids
+}
+
+
+pippo <- lapply(new_df_rc, test_appl_funct, y = df_rcid)
+pippo

@@ -19,3 +19,11 @@ map_cycle_year <- function(df){
   df <- mutate(df, Year = (as.integer(as.integer(RC.Number)/100))+2000)
   return(df)
 }
+
+
+test_lappl_funct <- function(x, y){
+
+  #x e il vettore riga della df legacy, y e la df rcid
+  list_of_ind <- which(y$Country == x["Country"])
+  x["RC.ID"] <- y$RC.ID[list_of_ind[1]]
+}
